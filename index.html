@@ -102,6 +102,139 @@
   const bestEl = document.getElementById('best');
   const speedEl = document.getElementById('speed');
 
+  // ===== ЗВУК (Web Audio API) =====
+  const Sound = (function(){
+    let ac = null, master = null;
+    let engOsc = null, engGain = null, engFilter = null, engStarted = false;
+    let muted = localStorage.getItem('racing_mute') === '1';
+
+    function init(){
+      if(ac) return ac;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = muted ? 0 : 0.85;
+      master.connect(ac.destination);
+      return ac;
+    }
+    function resume(){
+      init();
+      if(ac && ac.state === 'suspended') ac.resume();
+    }
+    function isMuted(){ return muted; }
+    function setMuted(m){
+      muted = m;
+      try{ localStorage.setItem('racing_mute', m ? '1' : '0'); }catch(e){}
+      if(master && ac) master.gain.setTargetAtTime(m ? 0 : 0.85, ac.currentTime, 0.05);
+    }
+    function noise(dur){
+      const len = Math.max(1, Math.floor(ac.sampleRate*dur));
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+      return buf;
+    }
+
+    function engineStart(){
+      if(!init() || engStarted) return;
+      engStarted = true;
+      engOsc = ac.createOscillator();
+      engOsc.type = 'sawtooth';
+      engOsc.frequency.value = 60;
+      engFilter = ac.createBiquadFilter();
+      engFilter.type = 'lowpass';
+      engFilter.frequency.value = 400;
+      engGain = ac.createGain();
+      engGain.gain.value = 0;
+      engOsc.connect(engFilter); engFilter.connect(engGain); engGain.connect(master);
+      engOsc.start();
+    }
+    function engineStop(){
+      if(engGain && ac) engGain.gain.setTargetAtTime(0, ac.currentTime, 0.08);
+    }
+    function engineUpdate(sp, alive){
+      if(!engStarted || !ac) return;
+      const t = ac.currentTime;
+      engGain.gain.setTargetAtTime(alive ? 0.05 + sp*0.05 : 0, t, 0.12);
+      engOsc.frequency.setTargetAtTime(56 + sp*95, t, 0.12);
+      engFilter.frequency.setTargetAtTime(360 + sp*760, t, 0.12);
+    }
+
+    function crash(){
+      if(!init() || muted) return;
+      const t = ac.currentTime;
+      const src = ac.createBufferSource();
+      src.buffer = noise(0.6);
+      const f = ac.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.setValueAtTime(2000, t);
+      f.frequency.exponentialRampToValueAtTime(120, t+0.5);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.9, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.6);
+      src.connect(f); f.connect(g); g.connect(master);
+      src.start(t); src.stop(t+0.62);
+
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(150, t);
+      o.frequency.exponentialRampToValueAtTime(38, t+0.45);
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.75, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t+0.5);
+      o.connect(og); og.connect(master);
+      o.start(t); o.stop(t+0.52);
+    }
+
+    function pass(){
+      if(!init() || muted) return;
+      const t = ac.currentTime;
+      const o = ac.createOscillator();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(820, t);
+      o.frequency.exponentialRampToValueAtTime(1240, t+0.08);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.15);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t+0.17);
+    }
+
+    function startBeep(){
+      if(!init() || muted) return;
+      const t = ac.currentTime;
+      [0, 0.18, 0.36].forEach((d, i)=>{
+        const o = ac.createOscillator();
+        o.type = 'square';
+        o.frequency.value = i < 2 ? 440 : 880;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t+d);
+        g.gain.exponentialRampToValueAtTime(0.2, t+d+0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+d+0.14);
+        o.connect(g); g.connect(master);
+        o.start(t+d); o.stop(t+d+0.16);
+      });
+    }
+
+    function click(){
+      if(!init() || muted) return;
+      const t = ac.currentTime;
+      const o = ac.createOscillator();
+      o.type = 'square';
+      o.frequency.value = 680;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.1, t+0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.06);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t+0.07);
+    }
+
+    return { resume, isMuted, setMuted, engineStart, engineStop, engineUpdate, crash, pass, startBeep, click };
+  })();
+
   let W=0, H=0, DPR=Math.min(window.devicePixelRatio||1, 2);
   let road = { x:0, w:0 };
 
