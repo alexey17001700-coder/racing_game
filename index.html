@@ -279,13 +279,13 @@
       e.x += (laneCenter(e.lane) - e.x) * Math.min(1, dt*4);
 
       // столкновение
-      if(Math.abs(e.x - player.x) < pw*0.82 && Math.abs(e.y - player.y) < ph*0.82){
+      if(Math.abs(e.x - player.x) < (pw + e.w)*0.40 && Math.abs(e.y - player.y) < (ph + e.h)*0.40){
         burst(player.x, player.y, '#ffd54a', 40);
         burst(e.x, e.y, e.color, 30);
         gameOver();
         return;
       }
-      if(e.y > H + ph){ enemies.splice(i,1); score += 15; }
+      if(e.y > H + e.h){ enemies.splice(i,1); score += Math.round(8 + e.h/12); }
     }
 
     // частицы
