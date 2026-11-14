@@ -152,6 +152,10 @@
   best = Math.floor(+(localStorage.getItem('racing_best')||0));
   bestEl.textContent = 'Рекорд: ' + best;
 
+  document.getElementById('ver').textContent = 'версия ' + VERSION;
+  document.getElementById('verBadge').textContent = 'ГОНКИ ' + VERSION + ' · ' + BUILD;
+  document.getElementById('verOverlay').textContent = VERSION + ' (' + BUILD + ')';
+
   function reset(){
     player = { lane:1, x:laneCenter(1), y:H - CAR_H()*1.6, vx:0, tilt:0 };
     enemies = [];
