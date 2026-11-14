@@ -876,6 +876,17 @@
   checkUpdate();
   setInterval(checkUpdate, 60000);
 
+  const muteBtn = document.getElementById('muteBtn');
+  function paintMute(){ muteBtn.textContent = Sound.isMuted() ? '🔇 Звук' : '🔊 Звук'; }
+  muteBtn.addEventListener('click', ()=>{
+    Sound.resume();
+    const m = !Sound.isMuted();
+    Sound.setMuted(m);
+    if(!m) Sound.click();
+    paintMute();
+  });
+  paintMute();
+
   startBtn.addEventListener('click', start);
   reset();
   requestAnimationFrame(loop);
