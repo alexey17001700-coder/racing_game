@@ -107,7 +107,7 @@
   let state = 'menu'; // menu | play | over
   let player, enemies, particles, stripes, score, best, speed, spawnT, roadOffset, shake, time;
 
-  best = +(localStorage.getItem('racing_best')||0);
+  best = Math.floor(+(localStorage.getItem('racing_best')||0));
   bestEl.textContent = 'Рекорд: ' + best;
 
   function reset(){
