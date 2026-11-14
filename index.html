@@ -349,6 +349,9 @@
     reset();
     state = 'play';
     overlay.classList.add('hide');
+    Sound.resume();
+    Sound.startBeep();
+    Sound.engineStart();
   }
 
   function gameOver(){
