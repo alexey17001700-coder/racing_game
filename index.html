@@ -168,10 +168,11 @@
   function gameOver(){
     state = 'over';
     shake = 18;
+    score = Math.floor(score);
     if(score > best){ best = score; localStorage.setItem('racing_best', best); }
-    bestEl.textContent = 'Рекорд: ' + best;
+    bestEl.textContent = 'Рекорд: ' + Math.floor(best);
     finalEl.style.display = 'block';
-    finalEl.innerHTML = 'Очки: <b>'+score+'</b><br><span style="font-size:14px;opacity:.7">Рекорд: '+best+'</span>';
+    finalEl.innerHTML = 'Очки: <b>'+score+'</b><br><span style="font-size:14px;opacity:.7">Рекорд: '+Math.floor(best)+'</span>';
     startBtn.textContent = 'ЕЩЁ РАЗ';
     overlay.classList.remove('hide');
   }
