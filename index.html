@@ -104,6 +104,36 @@
   const CAR_W = () => Math.min(laneW()*0.62, 62);
   const CAR_H = () => CAR_W()*1.85;
 
+  // ---- типы транспорта ----
+  const TYPES = {
+    car:   { wf:0.62, maxW:62, hf:1.85, weight:28 },
+    sport: { wf:0.58, maxW:58, hf:1.72, weight:14 },
+    suv:   { wf:0.70, maxW:70, hf:1.95, weight:16 },
+    truck: { wf:0.84, maxW:84, hf:3.00, weight:14 },
+    bus:   { wf:0.86, maxW:86, hf:3.30, weight:12 },
+    moto:  { wf:0.40, maxW:40, hf:1.60, weight:10 }
+  };
+  const PALETTES = {
+    car:   ['#ff5c5c','#ffb84a','#7c6bff','#3ddc97','#ff7ad9','#4ad6ff'],
+    sport: ['#ff2d55','#ffd54a','#00e5ff','#ff6b00'],
+    suv:   ['#5b6b7a','#2f7d5b','#8a5a2b','#3a4a5a'],
+    truck: ['#e8edf2','#3b6ea5','#c0392b','#2f7d5b'],
+    bus:   ['#ffb300','#e74c3c','#2e86de','#27ae60'],
+    moto:  ['#ff2d55','#00e5ff','#ffd54a','#9b59b6']
+  };
+  function typeSize(id){
+    const t = TYPES[id];
+    const w = Math.min(laneW()*t.wf, t.maxW);
+    return { w, h: w*t.hf };
+  }
+  function pickType(){
+    const ids = Object.keys(TYPES);
+    let total = 0; for(const id of ids) total += TYPES[id].weight;
+    let r = Math.random()*total;
+    for(const id of ids){ r -= TYPES[id].weight; if(r <= 0) return id; }
+    return 'car';
+  }
+
   let state = 'menu'; // menu | play | over
   let player, enemies, particles, stripes, score, best, speed, spawnT, roadOffset, shake, time;
 
