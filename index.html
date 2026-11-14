@@ -519,10 +519,10 @@
 
     // враги
     const w = CAR_W(), h = CAR_H();
-    for(const e of enemies) drawCar(e.x, e.y, w, h, e.color, 0, false);
+    for(const e of enemies) drawVehicle(e.x, e.y, e.w, e.h, e.type, e.color, 0, false);
 
     // игрок
-    if(state !== 'over') drawCar(player.x, player.y, w, h, '#ffd54a', player.tilt, true);
+    if(state !== 'over') drawVehicle(player.x, player.y, w, h, 'sport', '#ffd54a', player.tilt, true);
 
     // виньетка
     const vg = ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.85);
