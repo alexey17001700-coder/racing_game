@@ -50,11 +50,22 @@
   #controls { position:absolute; bottom:0; left:0; right:0; display:none; justify-content:space-between; padding:0 20px 24px; z-index:5; }
   #controls button { width:110px; height:110px; border-radius:50%; font-size:40px; padding:0; background:rgba(255,255,255,.1); color:#fff; box-shadow:none; border:2px solid rgba(255,255,255,.2); }
   @media (pointer:coarse) { #controls { display:flex; } }
+  #laugh {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    font-size:50vh; line-height:1; z-index:9; pointer-events:none; user-select:none;
+    filter:drop-shadow(0 0 46px rgba(0,0,0,.65));
+  }
+  #laugh.show { display:flex; animation:laughPop .45s cubic-bezier(.2,1.7,.4,1) both, laughShake .38s ease-in-out infinite alternate .45s; }
+  @keyframes laughPop { from{ transform:scale(.15) rotate(-30deg); opacity:0; } to{ transform:scale(1) rotate(0deg); opacity:1; } }
+  @keyframes laughShake { from{ transform:rotate(-10deg) scale(1); } to{ transform:rotate(10deg) scale(1.09); } }
+  @media (max-width:520px){ #laugh { font-size:44vh; } }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="cv"></canvas>
+
+  <div id="laugh">😂</div>
 
   <div id="hud">
     <div class="box">
