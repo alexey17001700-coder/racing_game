@@ -446,7 +446,7 @@
         gameOver();
         return;
       }
-      if(e.y > H + e.h){ enemies.splice(i,1); score += Math.round(8 + e.h/12); }
+      if(e.y > H + e.h){ enemies.splice(i,1); score += Math.round(8 + e.h/12); Sound.pass(); }
     }
 
     // частицы
