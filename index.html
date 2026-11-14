@@ -209,14 +209,17 @@
 
   function spawnEnemy(){
     const lane = Math.floor(Math.random()*LANES);
+    const type = pickType();
+    const size = typeSize(type);
     // не спавним, если близко к другому врагу в той же полосе
     for(const e of enemies){
-      if(e.lane === lane && e.y < CAR_H()*2.2) return;
+      if(e.lane === lane && e.y < e.h*1.6 + size.h*0.6) return;
     }
-    const colors = ['#ff5c5c','#ffb84a','#7c6bff','#3ddc97','#ff7ad9','#4ad6ff'];
+    const pal = PALETTES[type];
     enemies.push({
-      lane, x: laneCenter(lane), y: -CAR_H()*1.5,
-      color: colors[Math.floor(Math.random()*colors.length)],
+      lane, x: laneCenter(lane), y: -size.h*1.2,
+      w: size.w, h: size.h, type,
+      color: pal[Math.floor(Math.random()*pal.length)],
       vy: 0
     });
   }
