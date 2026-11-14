@@ -338,21 +338,79 @@
     ctx.closePath();
   }
 
-  function bodyGrad(w,color){
-    const g = ctx.createLinearGradient(-w/2,0,w/2,0);
-    g.addColorStop(0, shade(color,-30));
-    g.addColorStop(0.5, color);
-    g.addColorStop(1, shade(color,-45));
+  // ===== детализированная отрисовка (псевдо-3D) =====
+  function lg(x0,y0,x1,y1,stops){
+    const g = ctx.createLinearGradient(x0,y0,x1,y1);
+    for(let i=0;i<stops.length;i++) g.addColorStop(stops[i][0], stops[i][1]);
     return g;
+  }
+  function rr(x,y,w,h,r){ roundRect(x,y,w,h,r); ctx.fill(); }
+
+  function dropShadow(w,h){
+    ctx.save();
+    ctx.globalAlpha = .40; ctx.fillStyle = '#000';
+    rr(-w/2+4, -h/2+9, w*1.02, h*1.02, w*0.22);
+    ctx.globalAlpha = .20;
+    rr(-w/2+9, -h/2+16, w*1.08, h*1.05, w*0.26);
+    ctx.restore();
+  }
+
+  function wheel(x,y,w,h){
+    ctx.fillStyle = lg(x,0,x+w,0,[[0,'#06060a'],[.45,'#2b3038'],[1,'#040406']]);
+    rr(x,y,w,h,Math.min(w,h)*0.42);
+    ctx.fillStyle = lg(x,0,x+w,0,[[0,'#6d747e'],[.42,'#d8dee6'],[1,'#545a64']]);
+    rr(x+w*0.26, y+h*0.16, w*0.48, h*0.68, Math.min(w,h)*0.32);
+  }
+
+  function glass(x,y,w,h,r){
+    ctx.fillStyle = lg(x,y,x+w,y+h,[[0,'#0c1524'],[.45,'#1d2f4c'],[1,'#080f1c']]);
+    rr(x,y,w,h,r);
+    ctx.save(); ctx.globalAlpha = .26; ctx.fillStyle = '#d6ecff';
+    ctx.beginPath();
+    ctx.moveTo(x+w*0.10, y+h); ctx.lineTo(x+w*0.40, y);
+    ctx.lineTo(x+w*0.58, y);  ctx.lineTo(x+w*0.28, y+h);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+
+  function headlight(x,y,w,h,isPlayer){
+    ctx.save();
+    ctx.shadowColor = isPlayer ? 'rgba(255,246,190,.95)' : 'rgba(255,90,90,.85)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = lg(x,0,x+w,0,[[0,'#fffdf2'],[.5, isPlayer?'#fff0a8':'#ff9a9a'],[1,'#ffe9a0']]);
+    rr(x,y,w,h,h*0.45);
+    ctx.restore();
+  }
+
+  function taillight(x,y,w,h){
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,45,45,.9)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = lg(x,0,x+w,0,[[0,'#ff6060'],[.5,'#c81f1f'],[1,'#8a0f0f']]);
+    rr(x,y,w,h,h*0.45);
+    ctx.restore();
+  }
+
+  function plate(x,y,w,h){
+    ctx.fillStyle = '#eef1f5'; rr(x,y,w,h,1.5);
+    ctx.fillStyle = 'rgba(25,40,80,.5)'; rr(x+w*0.14, y+h*0.28, w*0.72, h*0.44, 1);
+  }
+
+  function bodyPaint(w,h,color){
+    ctx.fillStyle = lg(-w/2,0,w/2,0,[
+      [0, shade(color, 58)],
+      [.13, shade(color, 20)],
+      [.48, color],
+      [.80, shade(color,-32)],
+      [1, shade(color,-64)]
+    ]);
+    rr(-w/2,-h/2,w,h,w*0.20);
+    ctx.fillStyle = lg(0,-h/2,0,h/2,[[0,'rgba(255,255,255,.16)'],[.35,'rgba(255,255,255,0)'],[1,'rgba(0,0,0,.22)']]);
+    rr(-w/2,-h/2,w,h,w*0.20);
   }
 
   function drawVehicle(x,y,w,h,type,color,tilt,isPlayer){
     ctx.save();
     ctx.translate(x,y);
     ctx.rotate(tilt*0.25);
-    // тень
-    ctx.fillStyle = 'rgba(0,0,0,.45)';
-    roundRect(-w/2+3, -h/2+6, w, h, w*0.22); ctx.fill();
     if(type === 'truck') drawTruck(w,h,color,isPlayer);
     else if(type === 'bus') drawBus(w,h,color,isPlayer);
     else if(type === 'moto') drawMoto(w,h,color,isPlayer);
@@ -361,47 +419,75 @@
   }
 
   function drawCarBody(w,h,color,isPlayer,type){
+    const isSport = type === 'sport', isSuv = type === 'suv';
+    dropShadow(w,h);
+
+    // порог (тёмный низ кузова)
+    ctx.fillStyle = lg(-w/2,0,w/2,0,[[0,shade(color,-62)],[.5,shade(color,-40)],[1,shade(color,-74)]]);
+    rr(-w/2,-h/2,w,h,w*0.20);
+
     // кузов
-    ctx.fillStyle = bodyGrad(w,color);
-    roundRect(-w/2, -h/2, w, h, w*0.22); ctx.fill();
-    // блик на капоте
-    ctx.fillStyle = 'rgba(255,255,255,.10)';
-    roundRect(-w*0.42, -h*0.42, w*0.84, h*0.18, w*0.12); ctx.fill();
-    // лобовое
-    ctx.fillStyle = 'rgba(15,25,45,.85)';
-    roundRect(-w*0.34, -h*0.30, w*0.68, h*0.26, w*0.1); ctx.fill();
-    // заднее
-    roundRect(-w*0.34, h*0.10, w*0.68, h*0.20, w*0.1); ctx.fill();
+    const bw = w*0.95, bh = h*0.97;
+    bodyPaint(bw,bh,color);
+
+    // линии капота и багажника
+    ctx.strokeStyle = 'rgba(0,0,0,.20)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-bw*0.44,-bh*0.31); ctx.lineTo(bw*0.44,-bh*0.31); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-bw*0.44, bh*0.29); ctx.lineTo(bw*0.44, bh*0.29); ctx.stroke();
+
     // крыша
-    ctx.fillStyle = shade(color, 22);
-    roundRect(-w*0.30, -h*0.02, w*0.60, h*0.10, w*0.08); ctx.fill();
-    if(type === 'suv'){
-      // багажник на крыше
-      ctx.fillStyle = '#2b2f38';
-      roundRect(-w*0.34, -h*0.07, w*0.68, h*0.05, 3); ctx.fill();
+    const rw = bw*(isSport?0.66:0.72), rh = bh*(isSport?0.28:0.32);
+    ctx.fillStyle = lg(-rw/2,0,rw/2,0,[[0,shade(color,42)],[.45,shade(color,12)],[1,shade(color,-42)]]);
+    rr(-rw/2, -rh/2, rw, rh, rw*0.18);
+
+    // стёкла
+    glass(-bw*0.36, -bh*0.35, bw*0.72, bh*0.17, bw*0.07);
+    glass(-bw*0.34,  bh*0.19, bw*0.68, bh*0.13, bw*0.07);
+    glass(-bw*0.45, -bh*0.13, bw*0.11, bh*0.24, 3);
+    glass( bw*0.34, -bh*0.13, bw*0.11, bh*0.24, 3);
+
+    // зеркала
+    ctx.fillStyle = shade(color,-28);
+    rr(-bw*0.56, -bh*0.30, bw*0.12, bh*0.05, 2);
+    rr( bw*0.44, -bh*0.30, bw*0.12, bh*0.05, 2);
+
+    // фары, стопы, номер, решётка
+    headlight(-bw*0.40, -bh*0.47, bw*0.24, bh*0.055, isPlayer);
+    headlight( bw*0.16, -bh*0.47, bw*0.24, bh*0.055, isPlayer);
+    taillight(-bw*0.40,  bh*0.42, bw*0.22, bh*0.05);
+    taillight( bw*0.18,  bh*0.42, bw*0.22, bh*0.05);
+    plate(-bw*0.13, bh*0.44, bw*0.26, bh*0.045);
+    ctx.fillStyle = 'rgba(15,18,24,.85)';
+    rr(-bw*0.16, -bh*0.47, bw*0.32, bh*0.05, 2);
+
+    // детали по типу
+    if(isSport){
+      ctx.fillStyle = '#15181e';
+      rr(-bw*0.56, bh*0.33, bw*1.12, bh*0.06, 3);
+      ctx.fillStyle = 'rgba(255,255,255,.32)';
+      rr(-bw*0.10, -bh*0.46, bw*0.07, bh*0.92, 2);
+      rr( bw*0.03, -bh*0.46, bw*0.07, bh*0.92, 2);
+      ctx.fillStyle = '#1b1f26';
+      rr(-bw*0.20, -bh*0.43, bw*0.40, bh*0.035, 2);
     }
-    if(type === 'sport'){
-      // спойлер
-      ctx.fillStyle = '#1b1e24';
-      roundRect(-w*0.54, h*0.33, w*1.08, h*0.07, 3); ctx.fill();
-      // полоса на кузове
-      ctx.fillStyle = 'rgba(255,255,255,.35)';
-      roundRect(-w*0.06, -h*0.46, w*0.12, h*0.92, 3); ctx.fill();
+    if(isSuv){
+      ctx.fillStyle = '#2b3038';
+      rr(-rw*0.54, -rh*0.62, rw*0.10, rh*1.24, 2);
+      rr( rw*0.44, -rh*0.62, rw*0.10, rh*1.24, 2);
+      ctx.fillStyle = '#33383f';
+      rr(-rw*0.36, -rh*0.34, rw*0.72, rh*0.62, 4);
+      ctx.fillStyle = 'rgba(255,255,255,.10)';
+      rr(-rw*0.36, -rh*0.34, rw*0.72, rh*0.16, 4);
+      ctx.fillStyle = '#20242a';
+      rr(-bw*0.46, -bh*0.50, bw*0.92, bh*0.045, 3);
     }
-    // фары
-    ctx.fillStyle = isPlayer ? '#fff6c0' : '#ff5c5c';
-    roundRect(-w*0.40, -h*0.46, w*0.22, h*0.07, 3); ctx.fill();
-    roundRect( w*0.18, -h*0.46, w*0.22, h*0.07, 3); ctx.fill();
-    // стопы
-    ctx.fillStyle = 'rgba(255,60,60,.9)';
-    roundRect(-w*0.40, h*0.40, w*0.20, h*0.06, 3); ctx.fill();
-    roundRect( w*0.20, h*0.40, w*0.20, h*0.06, 3); ctx.fill();
+
     // колёса
-    ctx.fillStyle = '#111';
-    roundRect(-w*0.56, -h*0.34, w*0.14, h*0.22, 3); ctx.fill();
-    roundRect( w*0.42, -h*0.34, w*0.14, h*0.22, 3); ctx.fill();
-    roundRect(-w*0.56,  h*0.12, w*0.14, h*0.22, 3); ctx.fill();
-    roundRect( w*0.42,  h*0.12, w*0.14, h*0.22, 3); ctx.fill();
+    const ww = w*0.15, wh = h*0.21;
+    wheel(-w*0.585, -h*0.32, ww, wh);
+    wheel( w*0.435, -h*0.32, ww, wh);
+    wheel(-w*0.585,  h*0.11, ww, wh);
+    wheel( w*0.435,  h*0.11, ww, wh);
   }
 
   function drawTruck(w,h,color,isPlayer){
