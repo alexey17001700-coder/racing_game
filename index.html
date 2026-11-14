@@ -370,6 +370,7 @@
   function gameOver(){
     state = 'over';
     shake = 18;
+    laughEl.classList.add('show');
     Sound.crash();
     Sound.engineStop();
     score = Math.floor(score);
