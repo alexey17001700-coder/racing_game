@@ -856,6 +856,7 @@
     const dt = Math.min(0.05, (now-last)/1000);
     last = now;
     update(dt);
+    Sound.engineUpdate(state === 'play' ? speed : 0, state === 'play');
     render();
     requestAnimationFrame(loop);
   }
