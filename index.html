@@ -360,6 +360,7 @@
   function start(){
     reset();
     state = 'play';
+    laughEl.classList.remove('show');
     overlay.classList.add('hide');
     Sound.resume();
     Sound.startBeep();
