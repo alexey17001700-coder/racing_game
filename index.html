@@ -357,6 +357,8 @@
   function gameOver(){
     state = 'over';
     shake = 18;
+    Sound.crash();
+    Sound.engineStop();
     score = Math.floor(score);
     if(score > best){ best = score; localStorage.setItem('racing_best', best); }
     bestEl.textContent = 'Рекорд: ' + Math.floor(best);
