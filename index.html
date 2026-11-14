@@ -562,6 +562,21 @@
     requestAnimationFrame(loop);
   }
 
+  // ---- проверка обновлений (обход кэша GitHub Pages) ----
+  const updBtn = document.getElementById('updBtn');
+  function checkUpdate(){
+    fetch('index.html?_=' + Date.now(), { cache:'no-store' })
+      .then(r => r.text())
+      .then(txt => {
+        const m = txt.match(/const VERSION\s*=\s*'([^']+)'/);
+        if(m && m[1] !== VERSION) updBtn.style.display = 'block';
+      })
+      .catch(()=>{});
+  }
+  updBtn.addEventListener('click', ()=>{ location.href = location.pathname + '?v=' + Date.now(); });
+  checkUpdate();
+  setInterval(checkUpdate, 60000);
+
   startBtn.addEventListener('click', start);
   reset();
   requestAnimationFrame(loop);
